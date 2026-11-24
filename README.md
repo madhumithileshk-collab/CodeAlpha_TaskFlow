@@ -9,6 +9,9 @@ Developed for **CodeAlpha Internship Task 3**.
 ## 📌 Project Overview
 
 TaskFlow enables teams and individuals to organize projects, assign and manage tasks, track progress across interactive Kanban boards, communicate via task discussions, and receive live in-app notifications.
+**Live Demo:** https://codealpha-taskflow-7zmb.onrender.com
+
+**GitHub Repository:** https://github.com/madhumithileshk-collab/CodeAlpha_TaskFlow
 
 ---
 
@@ -88,7 +91,6 @@ TaskFlow/
 ├── manage.py                   # Django CLI management script
 ├── requirements.txt            # Python dependencies
 ├── README.md                   # Complete documentation
-├── db.sqlite3                  # SQLite database
 │
 ├── taskflow/                   # Project configuration directory
 │   ├── __init__.py
@@ -151,7 +153,7 @@ TaskFlow/
 ### Step 1: Open Terminal in TaskFlow Directory
 Open **PowerShell** or **Command Prompt** and ensure you are in the `TaskFlow` project folder:
 ```powershell
-cd C:\Users\welcome\OneDrive\Desktop\TaskFlow
+cd TaskFlow
 ```
 
 ### Step 2: Install Dependencies
@@ -190,20 +192,7 @@ Now open your web browser and navigate to:
 
 ---
 
-## 🔑 Pre-Seeded Credentials for Quick Evaluation
 
-You can sign in immediately using these pre-configured accounts:
-
-| Role | Username | Password | Notes |
-|---|---|---|---|
-| **Super Admin** | `admin` | `admin123` | Full access to Dashboard & Django Admin (`/admin/`) |
-| **Team Member** | `sarah_dev` | `demo1234` | Senior Frontend Engineer |
-| **Project Manager**| `alex_pm` | `demo1234` | Project Lead |
-| **Backend Engineer**| `david_backend` | `demo1234` | Cloud & Backend Engineer |
-
-*You can also click **Get Started Free** or **Register** on the homepage to register any new account.*
-
----
 
 ## 🧪 Running Automated Tests
 
