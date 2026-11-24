@@ -12,6 +12,9 @@ TaskFlow enables teams and individuals to organize projects, assign and manage t
 **Live Demo:** https://codealpha-taskflow-7zmb.onrender.com
 
 **GitHub Repository:** https://github.com/madhumithileshk-collab/CodeAlpha_TaskFlow
+## 📸 Screenshots
+
+![TaskFlow Dashboard](screenshots/dashboard.png)
 
 ---
 
