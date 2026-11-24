@@ -1,0 +1,304 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TaskFlow - Professional Project Management{% endblock %}</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'projects/css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+{% if user.is_authenticated %}
+    <div class="app-wrapper">
+        <!-- Sidebar Backdrop for Mobile -->
+        <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+        <!-- Sidebar -->
+        <aside class="app-sidebar" id="appSidebar">
+            <div class="sidebar-header">
+                <a href="{% url 'dashboard' %}" class="sidebar-brand">
+                    <div class="brand-icon-box">
+                        <i class="bi bi-kanban"></i>
+                    </div>
+                    <span>TaskFlow</span>
+                </a>
+            </div>
+
+            <div class="sidebar-nav">
+                <div class="px-2 mb-3">
+                    <a href="{% url 'project_create' %}" class="btn btn-primary w-100 btn-sm shadow-sm d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-plus-lg"></i>
+                        <span>New Project</span>
+                    </a>
+                </div>
+
+                <div class="nav-section-title">Navigation</div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                            <i class="bi bi-speedometer2"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'project_list' %}" class="nav-link {% if 'project' in request.resolver_match.url_name %}active{% endif %}">
+                            <i class="bi bi-folder2-open"></i>
+                            <span>Projects</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'task_list' %}" class="nav-link {% if 'task' in request.resolver_match.url_name %}active{% endif %}">
+                            <i class="bi bi-check2-square"></i>
+                            <span>Tasks</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'notification_list' %}" class="nav-link {% if 'notification' in request.resolver_match.url_name %}active{% endif %}">
+                            <i class="bi bi-bell"></i>
+                            <span>Notifications</span>
+                            {% if navbar_unread_count > 0 %}
+                                <span class="badge bg-danger sidebar-badge">{{ navbar_unread_count }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="nav-section-title mt-3">Account</div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a href="{% url 'profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+                            <i class="bi bi-person-badge"></i>
+                            <span>My Profile</span>
+                        </a>
+                    </li>
+                    {% if user.is_staff %}
+                    <li class="nav-item">
+                        <a href="/admin/" target="_blank" class="nav-link">
+                            <i class="bi bi-shield-lock"></i>
+                            <span>Admin Panel</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="d-flex align-items-center justify-content-between">
+                    <a href="{% url 'profile' %}" class="user-profile-chip flex-grow-1 text-truncate">
+                        <div class="avatar-circle avatar-sm">
+                            {{ user.profile.get_initials }}
+                        </div>
+                        <div class="text-truncate">
+                            <div class="fw-semibold text-white text-truncate" style="font-size: 0.88rem;">
+                                {{ user.get_full_name|default:user.username }}
+                            </div>
+                            <small class="text-muted text-truncate d-block" style="font-size: 0.75rem;">
+                                {{ user.profile.role_title|default:"Member" }}
+                            </small>
+                        </div>
+                    </a>
+                    <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-secondary text-light border-0 ms-1" title="Sign Out" data-bs-toggle="tooltip">
+                        <i class="bi bi-box-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Wrapper -->
+        <div class="app-main">
+            <!-- Top Navbar -->
+            <header class="app-topbar">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-sm btn-light d-lg-none border" id="sidebarToggleBtn" type="button" aria-label="Toggle Sidebar">
+                        <i class="bi bi-list fs-5"></i>
+                    </button>
+                    <div class="d-none d-md-flex align-items-center text-muted" style="font-size: 0.9rem;">
+                        <span class="fw-semibold text-dark">TaskFlow</span>
+                        <i class="bi bi-chevron-right mx-2" style="font-size: 0.75rem;"></i>
+                        <span>{% block page_breadcrumb %}Workspace{% endblock %}</span>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Quick Search Bar -->
+                    <form action="{% url 'task_list' %}" method="GET" class="d-none d-sm-flex align-items-center position-relative" style="width: 240px;">
+                        <i class="bi bi-search position-absolute text-muted ms-3" style="font-size: 0.85rem;"></i>
+                        <input type="text" name="q" class="form-control form-control-sm ps-5 bg-light" placeholder="Search tasks...">
+                    </form>
+
+                    <!-- Notifications Dropdown -->
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-light border position-relative" type="button" id="notifDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-bell"></i>
+                            {% if navbar_unread_count > 0 %}
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">
+                                    {{ navbar_unread_count }}
+                                </span>
+                            {% endif %}
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end shadow border-0 p-0" style="width: 320px;" aria-labelledby="notifDropdown">
+                            <div class="p-3 border-bottom d-flex align-items-center justify-content-between bg-light">
+                                <h6 class="mb-0 fw-bold">Notifications</h6>
+                                {% if navbar_unread_count > 0 %}
+                                    <span class="badge bg-primary rounded-pill">{{ navbar_unread_count }} new</span>
+                                {% endif %}
+                            </div>
+                            <div class="list-group list-group-flush" style="max-height: 280px; overflow-y: auto;">
+                                {% if navbar_unread_notifications %}
+                                    {% for notif in navbar_unread_notifications %}
+                                        <a href="{% url 'mark_notification_read' notif.pk %}" class="list-group-item list-group-item-action p-3">
+                                            <div class="d-flex w-100 justify-content-between mb-1">
+                                                <small class="text-primary fw-bold">{{ notif.notification_type|title }}</small>
+                                                <small class="text-muted">{{ notif.created_at|timesince }} ago</small>
+                                            </div>
+                                            <p class="mb-1 text-dark small">{{ notif.message }}</p>
+                                        </a>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="p-4 text-center text-muted small">
+                                        <i class="bi bi-check2-circle fs-3 text-success d-block mb-2"></i>
+                                        No unread notifications
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="p-2 border-top text-center bg-light">
+                                <a href="{% url 'notification_list' %}" class="small text-decoration-none fw-semibold">View All Notifications</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Dropdown -->
+                    <div class="dropdown">
+                        <button class="btn btn-sm p-0 border-0" type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="avatar-circle avatar-sm">
+                                {{ user.profile.get_initials }}
+                            </div>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 py-2" aria-labelledby="userMenuDropdown">
+                            <li class="px-3 py-2 border-bottom">
+                                <div class="fw-bold text-dark">{{ user.get_full_name|default:user.username }}</div>
+                                <small class="text-muted">{{ user.email }}</small>
+                            </li>
+                            <li><a class="dropdown-item py-2" href="{% url 'profile' %}"><i class="bi bi-person me-2"></i> My Profile</a></li>
+                            <li><a class="dropdown-item py-2" href="{% url 'project_create' %}"><i class="bi bi-plus-circle me-2"></i> Create Project</a></li>
+                            {% if user.is_staff %}
+                            <li><a class="dropdown-item py-2" href="/admin/" target="_blank"><i class="bi bi-gear me-2"></i> Django Admin</a></li>
+                            {% endif %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item py-2 text-danger" href="{% url 'logout' %}"><i class="bi bi-box-arrow-right me-2"></i> Log Out</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Messages -->
+            <div class="container-fluid px-4 pt-3">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm alert-auto-dismiss mb-3" role="alert">
+                            <div class="d-flex align-items-center gap-2">
+                                {% if message.tags == 'success' %}
+                                    <i class="bi bi-check-circle-fill fs-5"></i>
+                                {% elif message.tags == 'danger' or message.tags == 'error' %}
+                                    <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                                {% elif message.tags == 'warning' %}
+                                    <i class="bi bi-exclamation-circle-fill fs-5"></i>
+                                {% else %}
+                                    <i class="bi bi-info-circle-fill fs-5"></i>
+                                {% endif %}
+                                <span>{{ message }}</span>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <!-- Main Page Content -->
+            <main class="page-container">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+{% else %}
+    <!-- Public Layout (For Landing, Login, Register) -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark py-3 sticky-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2 fw-bold" href="{% url 'home' %}">
+                <div class="brand-icon-box" style="width:32px; height:32px; font-size:1rem;">
+                    <i class="bi bi-kanban"></i>
+                </div>
+                <span>TaskFlow</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#publicNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="publicNav">
+                <ul class="navbar-nav ms-auto align-items-lg-center gap-2">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'home' %}">Overview</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'login' %}">Sign In</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-primary btn-sm px-3 shadow-sm" href="{% url 'register' %}">Get Started Free</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Public Flash Messages -->
+    <div class="container mt-3">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- Public Body -->
+    <div class="flex-grow-1">
+        {% block public_content %}{% endblock %}
+    </div>
+
+    <!-- Public Footer -->
+    <footer class="bg-dark text-white-50 py-4 border-top border-secondary">
+        <div class="container text-center text-md-start">
+            <div class="row align-items-center gy-3">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center gap-2 mb-2 text-white fw-bold">
+                        <i class="bi bi-kanban text-primary"></i>
+                        <span>TaskFlow</span>
+                    </div>
+                    <p class="small mb-0">CodeAlpha Internship Task 3 - Full-Stack Django Project Management Tool.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <small>&copy; 2026 TaskFlow. Built with Django, SQLite & Bootstrap 5.</small>
+                </div>
+            </div>
+        </div>
+    </footer>
+{% endif %}
+
+    <!-- Bootstrap 5 Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="{% static 'projects/js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile - TaskFlow{% endblock %}
+{% block page_breadcrumb %}Profile{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="mb-4">
+        <h2 class="fw-bold mb-1">Account & Profile Settings</h2>
+        <p class="text-muted">Manage your personal details, role, and contact information.</p>
+    </div>
+
+    <div class="row g-4">
+        <!-- Profile Summary Card -->
+        <div class="col-lg-4">
+            <div class="tf-card text-center p-4">
+                <div class="avatar-circle avatar-lg mx-auto mb-3 shadow">
+                    {{ user.profile.get_initials }}
+                </div>
+                <h4 class="fw-bold mb-1">{{ user.get_full_name|default:user.username }}</h4>
+                <p class="text-primary fw-semibold small mb-2">{{ user.profile.role_title|default:"Team Member" }}</p>
+                <p class="text-muted small mb-3">@{{ user.username }}</p>
+
+                {% if user.profile.bio %}
+                    <div class="p-3 bg-light rounded text-start small text-muted mb-3">
+                        <i class="bi bi-quote text-primary me-1"></i>
+                        {{ user.profile.bio }}
+                    </div>
+                {% endif %}
+
+                <div class="border-top pt-3 text-start small text-muted">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span><i class="bi bi-envelope me-2"></i> Email:</span>
+                        <span class="fw-semibold text-dark">{{ user.email }}</span>
+                    </div>
+                    {% if user.profile.phone %}
+                    <div class="d-flex justify-content-between mb-2">
+                        <span><i class="bi bi-telephone me-2"></i> Phone:</span>
+                        <span class="fw-semibold text-dark">{{ user.profile.phone }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="d-flex justify-content-between">
+                        <span><i class="bi bi-calendar3 me-2"></i> Member Since:</span>
+                        <span class="fw-semibold text-dark">{{ user.date_joined|date:"M d, Y" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Profile Form -->
+        <div class="col-lg-8">
+            <div class="tf-card">
+                <div class="tf-card-header">
+                    <h5 class="mb-0 fw-bold">Update Profile Details</h5>
+                </div>
+                <div class="tf-card-body">
+                    <form method="POST" novalidate>
+                        {% csrf_token %}
+
+                        <h6 class="fw-bold text-muted text-uppercase small mb-3">Basic Information</h6>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">First Name</label>
+                                {{ u_form.first_name }}
+                                {% if u_form.first_name.errors %}
+                                    <div class="text-danger small mt-1">{{ u_form.first_name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Last Name</label>
+                                {{ u_form.last_name }}
+                                {% if u_form.last_name.errors %}
+                                    <div class="text-danger small mt-1">{{ u_form.last_name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Email Address</label>
+                            {{ u_form.email }}
+                            {% if u_form.email.errors %}
+                                <div class="text-danger small mt-1">{{ u_form.email.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <h6 class="fw-bold text-muted text-uppercase small mb-3 border-top pt-3">Work & Bio</h6>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Role / Job Title</label>
+                                {{ p_form.role_title }}
+                                {% if p_form.role_title.errors %}
+                                    <div class="text-danger small mt-1">{{ p_form.role_title.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Phone Number</label>
+                                {{ p_form.phone }}
+                                {% if p_form.phone.errors %}
+                                    <div class="text-danger small mt-1">{{ p_form.phone.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">About / Bio</label>
+                            {{ p_form.bio }}
+                            {% if p_form.bio.errors %}
+                                <div class="text-danger small mt-1">{{ p_form.bio.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">
+                                <i class="bi bi-check-lg me-1"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

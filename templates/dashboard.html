@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - TaskFlow{% endblock %}
+{% block page_breadcrumb %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Welcome & Quick Action Header -->
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">
+            Hello, {{ user.first_name|default:user.username }}! 👋
+        </h2>
+        <p class="text-muted mb-0">Here is the latest snapshot of your projects and task progress.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'project_create' %}" class="btn btn-primary d-flex align-items-center gap-2 shadow-sm">
+            <i class="bi bi-plus-lg"></i>
+            <span>Create Project</span>
+        </a>
+        <a href="{% url 'task_list' %}" class="btn btn-outline-secondary d-flex align-items-center gap-2">
+            <i class="bi bi-search"></i>
+            <span>Browse Tasks</span>
+        </a>
+    </div>
+</div>
+
+<!-- Key Stat Cards -->
+<div class="row g-3 mb-4">
+    <!-- Total Projects -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-widget">
+            <div class="stat-icon indigo">
+                <i class="bi bi-folder2-open"></i>
+            </div>
+            <div>
+                <div class="stat-number">{{ total_projects }}</div>
+                <div class="stat-label">Total Projects</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Tasks -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-widget">
+            <div class="stat-icon sky">
+                <i class="bi bi-list-task"></i>
+            </div>
+            <div>
+                <div class="stat-number">{{ total_tasks }}</div>
+                <div class="stat-label">Total Tasks</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Completed Tasks -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-widget">
+            <div class="stat-icon emerald">
+                <i class="bi bi-check2-circle"></i>
+            </div>
+            <div>
+                <div class="stat-number">{{ completed_tasks }}</div>
+                <div class="stat-label">Completed Tasks</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Tasks -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-widget">
+            <div class="stat-icon amber">
+                <i class="bi bi-hourglass-split"></i>
+            </div>
+            <div>
+                <div class="stat-number">{{ pending_tasks }}</div>
+                <div class="stat-label">Pending Tasks</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Secondary Metrics & Status Summary -->
+<div class="row g-4 mb-4">
+    <!-- Progress Bar Card -->
+    <div class="col-lg-8">
+        <div class="tf-card h-100">
+            <div class="tf-card-header">
+                <div>
+                    <h5 class="mb-0 fw-bold">Overall Workflow Health</h5>
+                    <small class="text-muted">Task completion progress across all active projects</small>
+                </div>
+                <span class="badge bg-primary fs-6 px-3 py-2 rounded-pill">{{ completion_rate }}% Complete</span>
+            </div>
+            <div class="tf-card-body">
+                <div class="tf-progress mb-3" style="height: 12px;">
+                    <div class="tf-progress-bar" style="width: {{ completion_rate }}%;"></div>
+                </div>
+                <div class="row text-center g-3 pt-2">
+                    <div class="col-4 border-end">
+                        <div class="text-muted small fw-semibold">TO DO</div>
+                        <div class="fw-bold fs-5 text-secondary">{{ todo_tasks }}</div>
+                    </div>
+                    <div class="col-4 border-end">
+                        <div class="text-muted small fw-semibold">IN PROGRESS</div>
+                        <div class="fw-bold fs-5 text-primary">{{ in_progress_tasks }}</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-muted small fw-semibold">COMPLETED</div>
+                        <div class="fw-bold fs-5 text-success">{{ completed_tasks }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Focus Card -->
+    <div class="col-lg-4">
+        <div class="tf-card h-100">
+            <div class="tf-card-header">
+                <h5 class="mb-0 fw-bold">My Personal Focus</h5>
+                <i class="bi bi-person-check text-muted fs-5"></i>
+            </div>
+            <div class="tf-card-body d-flex flex-column justify-content-around">
+                <div class="d-flex align-items-center justify-content-between p-2 rounded bg-light mb-2">
+                    <span class="small fw-semibold text-muted">Assigned to Me Pending:</span>
+                    <span class="badge bg-indigo text-primary fw-bold fs-6">{{ my_pending_tasks }}</span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between p-2 rounded bg-light mb-2">
+                    <span class="small fw-semibold text-muted">High Priority Open:</span>
+                    <span class="badge bg-danger text-white fw-bold fs-6">{{ high_priority_tasks }}</span>
+                </div>
+                <div class="mt-2 text-center">
+                    <a href="{% url 'task_list' %}?assigned=me" class="btn btn-sm btn-outline-primary w-100">
+                        View My Assigned Tasks &rarr;
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Dashboard Content: Recent Projects & Recent Tasks -->
+<div class="row g-4">
+    <!-- Recent Projects Section -->
+    <div class="col-lg-6">
+        <div class="tf-card h-100">
+            <div class="tf-card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-folder2 text-primary"></i>
+                    <h5 class="mb-0 fw-bold">Recent Projects</h5>
+                </div>
+                <a href="{% url 'project_list' %}" class="small text-decoration-none fw-semibold">View All ({{ total_projects }}) &rarr;</a>
+            </div>
+            <div class="tf-card-body p-0">
+                {% if recent_projects %}
+                    <div class="list-group list-group-flush">
+                        {% for project in recent_projects %}
+                            <div class="list-group-item p-3 border-bottom">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <a href="{% url 'project_detail' project.pk %}" class="fw-bold text-dark text-decoration-none">
+                                            {{ project.title }}
+                                        </a>
+                                        <p class="text-muted small mb-0 text-truncate" style="max-width: 320px;">
+                                            {{ project.description|default:"No description provided." }}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        {% if project.status == 'completed' %}
+                                            <span class="badge badge-status-completed">Completed</span>
+                                        {% elif project.status == 'in_progress' %}
+                                            <span class="badge badge-status-progress">In Progress</span>
+                                        {% elif project.status == 'planning' %}
+                                            <span class="badge badge-status-todo">Planning</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">On Hold</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between text-muted small mt-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="bi bi-check2-square"></i>
+                                        <span>{{ project.completed_tasks }}/{{ project.total_tasks }} tasks</span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="bi bi-calendar3"></i>
+                                        <span>{{ project.deadline|default:"No deadline" }}</span>
+                                    </div>
+                                </div>
+                                <div class="tf-progress mt-2" style="height: 5px;">
+                                    <div class="tf-progress-bar" style="width: {{ project.progress_percentage }}%;"></div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="p-5 text-center text-muted">
+                        <i class="bi bi-folder-plus fs-1 text-secondary d-block mb-2"></i>
+                        <p class="mb-2">No projects created yet.</p>
+                        <a href="{% url 'project_create' %}" class="btn btn-sm btn-primary">Create Your First Project</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Tasks Section -->
+    <div class="col-lg-6">
+        <div class="tf-card h-100">
+            <div class="tf-card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-check2-circle text-primary"></i>
+                    <h5 class="mb-0 fw-bold">Recent Tasks</h5>
+                </div>
+                <a href="{% url 'task_list' %}" class="small text-decoration-none fw-semibold">View All Tasks &rarr;</a>
+            </div>
+            <div class="tf-card-body p-0">
+                {% if recent_tasks %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light small text-muted">
+                                <tr>
+                                    <th class="ps-3">Task</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Assignee</th>
+                                    <th class="pe-3 text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for task in recent_tasks %}
+                                    <tr>
+                                        <td class="ps-3">
+                                            <a href="{% url 'task_detail' task.pk %}" class="fw-semibold text-dark text-decoration-none d-block">
+                                                {{ task.title }}
+                                            </a>
+                                            <small class="text-muted">{{ task.project.title }}</small>
+                                        </td>
+                                        <td>
+                                            {% if task.priority == 'High' %}
+                                                <span class="badge badge-priority-high">High</span>
+                                            {% elif task.priority == 'Medium' %}
+                                                <span class="badge badge-priority-medium">Medium</span>
+                                            {% else %}
+                                                <span class="badge badge-priority-low">Low</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <form action="{% url 'task_quick_status' task.pk %}" method="POST" class="d-inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="next" value="dashboard">
+                                                <select name="status" class="form-select form-select-sm py-0 px-2 quick-status-select" style="font-size: 0.8rem; width: 110px;">
+                                                    <option value="To Do" {% if task.status == 'To Do' %}selected{% endif %}>To Do</option>
+                                                    <option value="In Progress" {% if task.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                                                    <option value="Completed" {% if task.status == 'Completed' %}selected{% endif %}>Completed</option>
+                                                </select>
+                                            </form>
+                                        </td>
+                                        <td>
+                                            {% if task.assigned_to %}
+                                                <div class="d-flex align-items-center gap-1" title="{{ task.assigned_to.get_full_name|default:task.assigned_to.username }}">
+                                                    <div class="avatar-circle avatar-sm">
+                                                        {{ task.assigned_to.profile.get_initials }}
+                                                    </div>
+                                                    <small class="text-muted text-truncate" style="max-width: 70px;">{{ task.assigned_to.username }}</small>
+                                                </div>
+                                            {% else %}
+                                                <span class="text-muted small">None</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="pe-3 text-end">
+                                            <a href="{% url 'task_detail' task.pk %}" class="btn btn-sm btn-light border p-1" title="View Details">
+                                                <i class="bi bi-arrow-right-short fs-5"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="p-5 text-center text-muted">
+                        <i class="bi bi-clipboard-x fs-1 text-secondary d-block mb-2"></i>
+                        <p class="mb-0">No tasks created yet. Create a project to start adding tasks!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

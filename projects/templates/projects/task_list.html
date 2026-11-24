@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+
+{% block title %}All Tasks - TaskFlow{% endblock %}
+{% block page_breadcrumb %}Tasks{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">Tasks Directory</h2>
+        <p class="text-muted mb-0">Track, filter, and manage tasks across all your active projects.</p>
+    </div>
+    <div class="d-flex gap-2">
+        {% if projects %}
+            <div class="dropdown">
+                <button class="btn btn-primary dropdown-toggle shadow-sm d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-plus-lg"></i>
+                    <span>Create Task</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                    <li class="dropdown-header">Select Project:</li>
+                    {% for p in projects %}
+                        <li><a class="dropdown-item" href="{% url 'task_create' p.pk %}">{{ p.title }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Search & Filtering Bar -->
+<div class="tf-card p-3 mb-4">
+    <form method="GET" class="row g-2 align-items-center">
+        <!-- Search query -->
+        <div class="col-md-4">
+            <div class="input-group">
+                <span class="input-group-text bg-light text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search tasks or projects...">
+            </div>
+        </div>
+
+        <!-- Project Filter -->
+        <div class="col-sm-6 col-md-2">
+            <select name="project" class="form-select" onchange="this.form.submit()">
+                <option value="">All Projects</option>
+                {% for p in projects %}
+                    <option value="{{ p.id }}" {% if selected_project == p.id|stringformat:"s" %}selected{% endif %}>{{ p.title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Status Filter -->
+        <div class="col-sm-6 col-md-2">
+            <select name="status" class="form-select" onchange="this.form.submit()">
+                <option value="">All Statuses</option>
+                <option value="To Do" {% if selected_status == 'To Do' %}selected{% endif %}>To Do</option>
+                <option value="In Progress" {% if selected_status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                <option value="Completed" {% if selected_status == 'Completed' %}selected{% endif %}>Completed</option>
+            </select>
+        </div>
+
+        <!-- Priority Filter -->
+        <div class="col-sm-6 col-md-2">
+            <select name="priority" class="form-select" onchange="this.form.submit()">
+                <option value="">All Priorities</option>
+                <option value="High" {% if selected_priority == 'High' %}selected{% endif %}>High</option>
+                <option value="Medium" {% if selected_priority == 'Medium' %}selected{% endif %}>Medium</option>
+                <option value="Low" {% if selected_priority == 'Low' %}selected{% endif %}>Low</option>
+            </select>
+        </div>
+
+        <!-- Actions -->
+        <div class="col-sm-6 col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-outline-primary w-100">Filter</button>
+            {% if q or selected_project or selected_status or selected_priority or assigned_filter %}
+                <a href="{% url 'task_list' %}" class="btn btn-light border" title="Reset Filters"><i class="bi bi-x-lg"></i></a>
+            {% endif %}
+        </div>
+    </form>
+
+    <!-- Quick Filter Pills -->
+    <div class="d-flex align-items-center gap-2 mt-3 pt-2 border-top flex-wrap">
+        <span class="small text-muted fw-semibold me-1">Quick view:</span>
+        <a href="{% url 'task_list' %}" class="badge text-decoration-none {% if not assigned_filter and not selected_status %}bg-primary text-white{% else %}bg-light text-dark border{% endif %} px-3 py-2">
+            All ({{ total_count }})
+        </a>
+        <a href="{% url 'task_list' %}?assigned=me" class="badge text-decoration-none {% if assigned_filter == 'me' %}bg-primary text-white{% else %}bg-light text-dark border{% endif %} px-3 py-2">
+            <i class="bi bi-person me-1"></i> Assigned to Me
+        </a>
+        <a href="{% url 'task_list' %}?status=To+Do" class="badge text-decoration-none {% if selected_status == 'To Do' %}bg-primary text-white{% else %}bg-light text-dark border{% endif %} px-3 py-2">
+            To Do
+        </a>
+        <a href="{% url 'task_list' %}?status=In+Progress" class="badge text-decoration-none {% if selected_status == 'In Progress' %}bg-primary text-white{% else %}bg-light text-dark border{% endif %} px-3 py-2">
+            In Progress
+        </a>
+        <a href="{% url 'task_list' %}?status=Completed" class="badge text-decoration-none {% if selected_status == 'Completed' %}bg-primary text-white{% else %}bg-light text-dark border{% endif %} px-3 py-2">
+            Completed
+        </a>
+    </div>
+</div>
+
+<!-- Tasks Table Card -->
+<div class="tf-card overflow-hidden">
+    {% if tasks %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Task Details</th>
+                        <th>Project</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Assigned To</th>
+                        <th>Due Date</th>
+                        <th class="pe-4 text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks %}
+                        <tr>
+                            <!-- Task Details -->
+                            <td class="ps-4" style="max-width: 280px;">
+                                <a href="{% url 'task_detail' task.pk %}" class="fw-bold text-dark text-decoration-none d-block">
+                                    {{ task.title }}
+                                </a>
+                                <p class="text-muted small mb-0 text-truncate">
+                                    {{ task.description|default:"No description" }}
+                                </p>
+                            </td>
+
+                            <!-- Project -->
+                            <td>
+                                <a href="{% url 'project_detail' task.project.pk %}" class="badge bg-light text-primary border text-decoration-none">
+                                    <i class="bi bi-folder me-1"></i> {{ task.project.title }}
+                                </a>
+                            </td>
+
+                            <!-- Priority -->
+                            <td>
+                                {% if task.priority == 'High' %}
+                                    <span class="badge badge-priority-high">High</span>
+                                {% elif task.priority == 'Medium' %}
+                                    <span class="badge badge-priority-medium">Medium</span>
+                                {% else %}
+                                    <span class="badge badge-priority-low">Low</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- Status (Quick Update Selector) -->
+                            <td>
+                                <form action="{% url 'task_quick_status' task.pk %}" method="POST" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                    <select name="status" class="form-select form-select-sm py-1 quick-status-select" style="font-size: 0.82rem; width: 125px;">
+                                        <option value="To Do" {% if task.status == 'To Do' %}selected{% endif %}>To Do</option>
+                                        <option value="In Progress" {% if task.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                                        <option value="Completed" {% if task.status == 'Completed' %}selected{% endif %}>Completed</option>
+                                    </select>
+                                </form>
+                            </td>
+
+                            <!-- Assigned To -->
+                            <td>
+                                {% if task.assigned_to %}
+                                    <div class="d-flex align-items-center gap-2" title="{{ task.assigned_to.get_full_name|default:task.assigned_to.username }}">
+                                        <div class="avatar-circle avatar-sm">{{ task.assigned_to.profile.get_initials }}</div>
+                                        <span class="small fw-semibold text-dark">{{ task.assigned_to.username }}</span>
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted small">Unassigned</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- Due Date -->
+                            <td>
+                                {% if task.due_date %}
+                                    <span class="small {% if task.is_overdue %}text-danger fw-bold{% else %}text-muted{% endif %}">
+                                        <i class="bi bi-calendar3 me-1"></i>{{ task.due_date|date:"M d, Y" }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted small">No deadline</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- Actions -->
+                            <td class="pe-4 text-end">
+                                <div class="d-flex justify-content-end gap-1">
+                                    <a href="{% url 'task_detail' task.pk %}" class="btn btn-sm btn-light border" title="View & Comments">
+                                        <i class="bi bi-chat-text"></i> {{ task.comments_count }}
+                                    </a>
+                                    <a href="{% url 'task_edit' task.pk %}" class="btn btn-sm btn-light border" title="Edit Task">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{% url 'task_delete' task.pk %}" class="btn btn-sm btn-light border text-danger" title="Delete Task">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="p-5 text-center text-muted">
+            <i class="bi bi-clipboard-x fs-1 text-secondary mb-3 d-block"></i>
+            <h5 class="fw-bold">No Tasks Match the Criteria</h5>
+            <p class="text-muted">Try adjusting your filters or search terms.</p>
+            <a href="{% url 'task_list' %}" class="btn btn-sm btn-outline-secondary">Clear Filters</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

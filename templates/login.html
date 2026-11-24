@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign In - TaskFlow{% endblock %}
+
+{% block public_content %}
+<div class="container py-5">
+    <div class="row justify-content-center align-items-center min-vh-75">
+        <div class="col-md-6 col-lg-5 col-xl-4">
+            <div class="text-center mb-4">
+                <div class="brand-icon-box mx-auto mb-3" style="width: 48px; height: 48px; font-size: 1.5rem;">
+                    <i class="bi bi-kanban"></i>
+                </div>
+                <h3 class="fw-bold text-dark">Welcome back</h3>
+                <p class="text-muted small">Enter your credentials to access your TaskFlow workspace.</p>
+            </div>
+
+            <div class="tf-card p-4 shadow-sm border">
+                <form method="POST" novalidate>
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger py-2 small mb-3">
+                            {% for error in form.non_field_errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label for="{{ form.username.id_for_label }}" class="form-label">Username</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted"><i class="bi bi-person"></i></span>
+                            {{ form.username }}
+                        </div>
+                        {% if form.username.errors %}
+                            <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="{{ form.password.id_for_label }}" class="form-label mb-0">Password</label>
+                        </div>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted"><i class="bi bi-lock"></i></span>
+                            {{ form.password }}
+                        </div>
+                        {% if form.password.errors %}
+                            <div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold shadow-sm">
+                        Sign In
+                    </button>
+                </form>
+
+                <div class="text-center mt-4 pt-3 border-top">
+                    <p class="small text-muted mb-0">
+                        Don't have an account yet? 
+                        <a href="{% url 'register' %}" class="text-primary fw-semibold text-decoration-none">Create an account</a>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Demo Hint Box -->
+            <div class="alert alert-light border small mt-3 text-muted text-center">
+                <i class="bi bi-info-circle me-1 text-primary"></i>
+                Tip: Create a user via <strong>Register</strong> or create an admin account using <code>python manage.py createsuperuser</code>.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

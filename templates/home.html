@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}TaskFlow - Manage Projects, Tasks & Teams{% endblock %}
+
+{% block public_content %}
+<!-- Hero Section -->
+<section class="hero-gradient">
+    <div class="hero-glow"></div>
+    <div class="container position-relative">
+        <div class="row align-items-center gy-5">
+            <div class="col-lg-7">
+                <span class="badge bg-primary bg-opacity-25 text-info border border-info border-opacity-25 px-3 py-2 rounded-pill mb-3 fw-semibold">
+                    <i class="bi bi-award me-1"></i> CodeAlpha Internship Task 3
+                </span>
+                <h1 class="display-4 fw-extrabold text-white mb-3" style="line-height: 1.15;">
+                    Empower Your Team With Seamless Project Management
+                </h1>
+                <p class="lead text-white-50 mb-4" style="max-width: 580px;">
+                    TaskFlow gives you everything you need to organize projects, assign and track tasks with priorities, collaborate through comments, and stay on top of deadlines with in-app notifications.
+                </p>
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="{% url 'register' %}" class="btn btn-primary btn-lg px-4 shadow">
+                        <i class="bi bi-rocket-takeoff me-2"></i> Get Started Free
+                    </a>
+                    <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg px-4">
+                        <i class="bi bi-box-arrow-in-right me-2"></i> Sign In to Dashboard
+                    </a>
+                </div>
+                <div class="mt-4 pt-2 text-white-50 small d-flex align-items-center gap-4">
+                    <span><i class="bi bi-check-circle-fill text-success me-1"></i> SQLite Database</span>
+                    <span><i class="bi bi-check-circle-fill text-success me-1"></i> Full Django ORM</span>
+                    <span><i class="bi bi-check-circle-fill text-success me-1"></i> Role-Based Access</span>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <!-- Preview Card -->
+                <div class="card bg-dark bg-opacity-75 border border-secondary border-opacity-50 shadow-lg text-white rounded-4 p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-4 border-bottom border-secondary pb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="avatar-circle avatar-sm bg-primary">TF</span>
+                            <div>
+                                <h6 class="mb-0 fw-bold">Live Workspace Preview</h6>
+                                <small class="text-white-50">Active Sprint Board</small>
+                            </div>
+                        </div>
+                        <span class="badge bg-success bg-opacity-25 text-success border border-success">Live Status</span>
+                    </div>
+
+                    <div class="mb-3 p-3 bg-secondary bg-opacity-25 rounded-3 border border-secondary border-opacity-25">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-semibold small">Web Platform Launch</span>
+                            <span class="badge badge-priority-high">High</span>
+                        </div>
+                        <small class="text-white-50 d-block mb-2">Build authentication, task boards, and member roles.</small>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-info" style="width: 75%"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 p-3 bg-secondary bg-opacity-25 rounded-3 border border-secondary border-opacity-25">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-semibold small">API Integration & Comments</span>
+                            <span class="badge badge-priority-medium">Medium</span>
+                        </div>
+                        <small class="text-white-50 d-block mb-2">Team communication feed and instant alerts.</small>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-success" style="width: 100%"></div>
+                        </div>
+                    </div>
+
+                    <div class="text-center pt-2">
+                        <a href="{% url 'register' %}" class="btn btn-sm btn-outline-info w-100">
+                            Try Interactive Demo &rarr;
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Grid -->
+<section class="py-5 bg-white">
+    <div class="container py-4">
+        <div class="text-center mb-5">
+            <span class="text-primary fw-bold text-uppercase small tracking-wide">Key Capabilities</span>
+            <h2 class="fw-bold mt-1">Built to Deliver Complete Workflow Control</h2>
+            <p class="text-muted mx-auto" style="max-width: 600px;">
+                Engineered with Django's architecture for security, reliability, and speed.
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <!-- Feature 1 -->
+            <div class="col-md-4">
+                <div class="tf-card h-100 p-4">
+                    <div class="stat-icon indigo mb-3">
+                        <i class="bi bi-folder-check"></i>
+                    </div>
+                    <h5 class="fw-bold">Project Management</h5>
+                    <p class="text-muted small">
+                        Create, organize, and monitor projects with custom deadlines, status tracking (Planning, In Progress, Completed), and member assignments.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Feature 2 -->
+            <div class="col-md-4">
+                <div class="tf-card h-100 p-4">
+                    <div class="stat-icon sky mb-3">
+                        <i class="bi bi-kanban"></i>
+                    </div>
+                    <h5 class="fw-bold">Task Organization</h5>
+                    <p class="text-muted small">
+                        Assign tasks with priorities (Low, Medium, High) and workflow statuses (To Do, In Progress, Completed). Filter and search anytime.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Feature 3 -->
+            <div class="col-md-4">
+                <div class="tf-card h-100 p-4">
+                    <div class="stat-icon emerald mb-3">
+                        <i class="bi bi-chat-left-text"></i>
+                    </div>
+                    <h5 class="fw-bold">Task Comments</h5>
+                    <p class="text-muted small">
+                        Collaborate directly inside task cards. Add comments, share feedback, and maintain clear audit trails of team decisions.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Feature 4 -->
+            <div class="col-md-4">
+                <div class="tf-card h-100 p-4">
+                    <div class="stat-icon amber mb-3">
+                        <i class="bi bi-bell"></i>
+                    </div>
+                    <h5 class="fw-bold">In-App Notifications</h5>
+                    <p class="text-muted small">
+                        Get alerted immediately when a task is assigned to you, when project members are added, or when team members post comments.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Feature 5 -->
+            <div class="col-md-4">
+                <div class="tf-card h-100 p-4">
+                    <div class="stat-icon rose mb-3">
+                        <i class="bi bi-bar-chart-line"></i>
+                    </div>
+                    <h5 class="fw-bold">Executive Dashboard</h5>
+                    <p class="text-muted small">
+                        Visualize total projects, pending and completed tasks, high-priority issues, and percentage completion progress at a glance.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Feature 6 -->
+            <div class="col-md-4">
+                <div class="tf-card h-100 p-4">
+                    <div class="stat-icon indigo mb-3">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h5 class="fw-bold">Secure Authentication</h5>
+                    <p class="text-muted small">
+                        Robust Django user authentication, encrypted password hashing, user profiles, and permission-checked project boundaries.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action Banner -->
+<section class="py-5" style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);">
+    <div class="container text-center py-4 text-white">
+        <h2 class="fw-bold mb-3">Ready to organize your workflow?</h2>
+        <p class="text-white-50 mb-4 mx-auto" style="max-width: 500px;">
+            Create your account now and start building projects with TaskFlow.
+        </p>
+        <a href="{% url 'register' %}" class="btn btn-primary btn-lg px-5 shadow">
+            Create Free Account
+        </a>
+    </div>
+</section>
+{% endblock %}

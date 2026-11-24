@@ -1,0 +1,442 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ project.title }} - TaskFlow{% endblock %}
+{% block page_breadcrumb %}<a href="{% url 'project_list' %}" class="text-decoration-none text-muted">Projects</a> <i class="bi bi-chevron-right mx-1" style="font-size: 0.75rem;"></i> {{ project.title }}{% endblock %}
+
+{% block content %}
+<!-- Project Header Card -->
+<div class="tf-card p-4 mb-4">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge 
+                    {% if project.status == 'completed' %}badge-status-completed
+                    {% elif project.status == 'in_progress' %}badge-status-progress
+                    {% elif project.status == 'planning' %}badge-status-todo
+                    {% else %}bg-secondary{% endif %}">
+                    {{ project.get_status_display }}
+                </span>
+                <span class="text-muted small">&bull; Created by <strong>{{ project.created_by.username }}</strong> on {{ project.created_at|date:"M d, Y" }}</span>
+            </div>
+            <h2 class="fw-bold text-dark mb-1">{{ project.title }}</h2>
+            <p class="text-muted mb-0" style="max-width: 800px;">
+                {{ project.description|default:"No description provided for this project." }}
+            </p>
+        </div>
+
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <a href="{% url 'task_create' project.pk %}" class="btn btn-primary d-flex align-items-center gap-2 shadow-sm">
+                <i class="bi bi-plus-lg"></i>
+                <span>Add Task</span>
+            </a>
+            {% if can_manage %}
+                <a href="{% url 'project_edit' project.pk %}" class="btn btn-outline-secondary d-flex align-items-center gap-1">
+                    <i class="bi bi-pencil"></i>
+                    <span>Edit</span>
+                </a>
+            {% endif %}
+            {% if project.created_by == user or user.is_superuser %}
+                <a href="{% url 'project_delete' project.pk %}" class="btn btn-outline-danger d-flex align-items-center gap-1">
+                    <i class="bi bi-trash"></i>
+                    <span>Delete</span>
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Quick Metrics & Progress Row -->
+    <div class="row g-3 mt-3 pt-3 border-top align-items-center">
+        <div class="col-md-5">
+            <div class="d-flex justify-content-between text-muted small mb-1">
+                <span class="fw-semibold">Overall Completion</span>
+                <span class="fw-bold text-dark">{{ project.progress_percentage }}%</span>
+            </div>
+            <div class="tf-progress" style="height: 10px;">
+                <div class="tf-progress-bar" style="width: {{ project.progress_percentage }}%;"></div>
+            </div>
+        </div>
+        <div class="col-md-7 d-flex justify-content-md-end gap-3 text-center">
+            <div class="px-2">
+                <div class="fs-5 fw-bold text-dark">{{ project.total_tasks }}</div>
+                <small class="text-muted">Total Tasks</small>
+            </div>
+            <div class="px-2 border-start">
+                <div class="fs-5 fw-bold text-secondary">{{ project.tasks.all|length|default:0 }}</div>
+                <small class="text-muted">Active</small>
+            </div>
+            <div class="px-2 border-start">
+                <div class="fs-5 fw-bold text-success">{{ project.completed_tasks }}</div>
+                <small class="text-muted">Completed</small>
+            </div>
+            <div class="px-2 border-start">
+                <div class="fs-5 fw-bold text-primary">{{ project.deadline|date:"M d"|default:"None" }}</div>
+                <small class="text-muted">Deadline</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs: Tasks Board / Members -->
+<ul class="nav nav-pills mb-4 gap-2" id="projectTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active px-4 py-2 fw-semibold" id="tasks-tab" data-bs-toggle="pill" data-bs-target="#tasksContent" type="button" role="tab">
+            <i class="bi bi-kanban me-2"></i> Tasks Board ({{ project.total_tasks }})
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link px-4 py-2 fw-semibold" id="members-tab" data-bs-toggle="pill" data-bs-target="#membersContent" type="button" role="tab">
+            <i class="bi bi-people me-2"></i> Team Members ({{ memberships|length|add:1 }})
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="projectTabContent">
+    <!-- Tab 1: Tasks Board -->
+    <div class="tab-pane fade show active" id="tasksContent" role="tabpanel">
+        <!-- Filter bar for tasks within project -->
+        <div class="tf-card p-3 mb-4">
+            <form method="GET" class="row g-2 align-items-center">
+                <div class="col-md-5">
+                    <input type="text" name="tq" value="{{ task_q }}" class="form-control form-control-sm" placeholder="Search tasks in this project...">
+                </div>
+                <div class="col-md-3">
+                    <select name="priority" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">All Priorities</option>
+                        <option value="High" {% if task_priority == 'High' %}selected{% endif %}>High Priority</option>
+                        <option value="Medium" {% if task_priority == 'Medium' %}selected{% endif %}>Medium Priority</option>
+                        <option value="Low" {% if task_priority == 'Low' %}selected{% endif %}>Low Priority</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-sm btn-primary w-100">Filter</button>
+                </div>
+                <div class="col-md-2">
+                    <a href="{% url 'task_create' project.pk %}" class="btn btn-sm btn-success w-100">
+                        <i class="bi bi-plus"></i> New Task
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- 3-Column Kanban Board -->
+        <div class="kanban-board">
+            <!-- TO DO Column -->
+            <div class="kanban-column">
+                <div class="kanban-column-header">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-circle text-secondary"></i>
+                        <h6 class="mb-0 fw-bold">TO DO</h6>
+                    </div>
+                    <span class="badge bg-secondary rounded-pill">{{ todo_tasks.count }}</span>
+                </div>
+
+                {% if todo_tasks %}
+                    {% for task in todo_tasks %}
+                        <div class="kanban-task-card">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge 
+                                    {% if task.priority == 'High' %}badge-priority-high
+                                    {% elif task.priority == 'Medium' %}badge-priority-medium
+                                    {% else %}badge-priority-low{% endif %}">
+                                    {{ task.priority }}
+                                </span>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm p-0 text-muted" type="button" data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 small">
+                                        <li><a class="dropdown-item" href="{% url 'task_detail' task.pk %}"><i class="bi bi-eye me-2"></i> Details</a></li>
+                                        <li><a class="dropdown-item" href="{% url 'task_edit' task.pk %}"><i class="bi bi-pencil me-2"></i> Edit</a></li>
+                                        <li><a class="dropdown-item text-danger" href="{% url 'task_delete' task.pk %}"><i class="bi bi-trash me-2"></i> Delete</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <h6 class="fw-bold mb-1">
+                                <a href="{% url 'task_detail' task.pk %}" class="text-dark text-decoration-none">
+                                    {{ task.title }}
+                                </a>
+                            </h6>
+                            <p class="text-muted small mb-2 text-truncate-2" style="max-height: 38px; overflow: hidden;">
+                                {{ task.description|default:"No task details." }}
+                            </p>
+
+                            <!-- Due Date & Comments -->
+                            <div class="d-flex justify-content-between align-items-center text-muted small mb-2 pt-1">
+                                {% if task.due_date %}
+                                    <span class="{% if task.is_overdue %}text-danger fw-bold{% endif %}">
+                                        <i class="bi bi-calendar-event me-1"></i>{{ task.due_date|date:"M d" }}
+                                    </span>
+                                {% else %}
+                                    <span><i class="bi bi-calendar me-1"></i>No date</span>
+                                {% endif %}
+
+                                <span><i class="bi bi-chat-text me-1"></i>{{ task.comments_count }}</span>
+                            </div>
+
+                            <!-- Footer: Assignee & Quick Status Form -->
+                            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                {% if task.assigned_to %}
+                                    <div class="d-flex align-items-center gap-1" title="Assigned to {{ task.assigned_to.username }}">
+                                        <div class="avatar-circle avatar-sm">{{ task.assigned_to.profile.get_initials }}</div>
+                                        <small class="text-muted text-truncate" style="max-width: 80px;">{{ task.assigned_to.username }}</small>
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted small">Unassigned</span>
+                                {% endif %}
+
+                                <form action="{% url 'task_quick_status' task.pk %}" method="POST" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="status" value="In Progress">
+                                    <button type="submit" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.75rem;">
+                                        Start &rarr;
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4 text-muted small">
+                        <i class="bi bi-inbox fs-3 d-block mb-1"></i>
+                        No tasks to do
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- IN PROGRESS Column -->
+            <div class="kanban-column">
+                <div class="kanban-column-header">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-arrow-repeat text-primary"></i>
+                        <h6 class="mb-0 fw-bold">IN PROGRESS</h6>
+                    </div>
+                    <span class="badge bg-primary rounded-pill">{{ in_progress_tasks.count }}</span>
+                </div>
+
+                {% if in_progress_tasks %}
+                    {% for task in in_progress_tasks %}
+                        <div class="kanban-task-card border-primary border-opacity-25">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge 
+                                    {% if task.priority == 'High' %}badge-priority-high
+                                    {% elif task.priority == 'Medium' %}badge-priority-medium
+                                    {% else %}badge-priority-low{% endif %}">
+                                    {{ task.priority }}
+                                </span>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm p-0 text-muted" type="button" data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 small">
+                                        <li><a class="dropdown-item" href="{% url 'task_detail' task.pk %}"><i class="bi bi-eye me-2"></i> Details</a></li>
+                                        <li><a class="dropdown-item" href="{% url 'task_edit' task.pk %}"><i class="bi bi-pencil me-2"></i> Edit</a></li>
+                                        <li><a class="dropdown-item text-danger" href="{% url 'task_delete' task.pk %}"><i class="bi bi-trash me-2"></i> Delete</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <h6 class="fw-bold mb-1">
+                                <a href="{% url 'task_detail' task.pk %}" class="text-dark text-decoration-none">
+                                    {{ task.title }}
+                                </a>
+                            </h6>
+                            <p class="text-muted small mb-2 text-truncate-2" style="max-height: 38px; overflow: hidden;">
+                                {{ task.description|default:"No task details." }}
+                            </p>
+
+                            <div class="d-flex justify-content-between align-items-center text-muted small mb-2 pt-1">
+                                {% if task.due_date %}
+                                    <span class="{% if task.is_overdue %}text-danger fw-bold{% endif %}">
+                                        <i class="bi bi-calendar-event me-1"></i>{{ task.due_date|date:"M d" }}
+                                    </span>
+                                {% else %}
+                                    <span><i class="bi bi-calendar me-1"></i>No date</span>
+                                {% endif %}
+
+                                <span><i class="bi bi-chat-text me-1"></i>{{ task.comments_count }}</span>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                {% if task.assigned_to %}
+                                    <div class="d-flex align-items-center gap-1">
+                                        <div class="avatar-circle avatar-sm">{{ task.assigned_to.profile.get_initials }}</div>
+                                        <small class="text-muted text-truncate" style="max-width: 80px;">{{ task.assigned_to.username }}</small>
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted small">Unassigned</span>
+                                {% endif %}
+
+                                <form action="{% url 'task_quick_status' task.pk %}" method="POST" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="status" value="Completed">
+                                    <button type="submit" class="btn btn-sm btn-success py-0 px-2" style="font-size: 0.75rem;">
+                                        Complete &check;
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4 text-muted small">
+                        <i class="bi bi-hourglass fs-3 d-block mb-1"></i>
+                        No tasks in progress
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- COMPLETED Column -->
+            <div class="kanban-column">
+                <div class="kanban-column-header">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-check-circle text-success"></i>
+                        <h6 class="mb-0 fw-bold">COMPLETED</h6>
+                    </div>
+                    <span class="badge bg-success rounded-pill">{{ completed_tasks.count }}</span>
+                </div>
+
+                {% if completed_tasks %}
+                    {% for task in completed_tasks %}
+                        <div class="kanban-task-card bg-light">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge badge-status-completed">Done</span>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm p-0 text-muted" type="button" data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 small">
+                                        <li><a class="dropdown-item" href="{% url 'task_detail' task.pk %}"><i class="bi bi-eye me-2"></i> Details</a></li>
+                                        <li><a class="dropdown-item" href="{% url 'task_edit' task.pk %}"><i class="bi bi-pencil me-2"></i> Edit</a></li>
+                                        <li><a class="dropdown-item text-danger" href="{% url 'task_delete' task.pk %}"><i class="bi bi-trash me-2"></i> Delete</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <h6 class="fw-bold mb-1 text-decoration-line-through text-muted">
+                                <a href="{% url 'task_detail' task.pk %}" class="text-muted text-decoration-line-through">
+                                    {{ task.title }}
+                                </a>
+                            </h6>
+
+                            <div class="d-flex justify-content-between align-items-center text-muted small pt-2 mt-2 border-top">
+                                {% if task.assigned_to %}
+                                    <div class="d-flex align-items-center gap-1">
+                                        <div class="avatar-circle avatar-sm">{{ task.assigned_to.profile.get_initials }}</div>
+                                        <small class="text-muted">{{ task.assigned_to.username }}</small>
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted small">None</span>
+                                {% endif %}
+
+                                <form action="{% url 'task_quick_status' task.pk %}" method="POST" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="status" value="To Do">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.75rem;" title="Reopen Task">
+                                        Reopen
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4 text-muted small">
+                        <i class="bi bi-clipboard-check fs-3 d-block mb-1"></i>
+                        No completed tasks
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 2: Team Members -->
+    <div class="tab-pane fade" id="membersContent" role="tabpanel">
+        <div class="row g-4">
+            <!-- Members List -->
+            <div class="col-lg-7">
+                <div class="tf-card">
+                    <div class="tf-card-header">
+                        <h5 class="mb-0 fw-bold">Project Team</h5>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <!-- Creator / Owner -->
+                        <div class="list-group-item p-3 d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="avatar-circle">
+                                    {{ project.created_by.profile.get_initials }}
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark">
+                                        {{ project.created_by.get_full_name|default:project.created_by.username }}
+                                        <span class="badge bg-primary ms-1">Creator / Owner</span>
+                                    </div>
+                                    <small class="text-muted">{{ project.created_by.email }} &bull; @{{ project.created_by.username }}</small>
+                                </div>
+                            </div>
+                            <span class="badge bg-light text-dark border">Project Creator</span>
+                        </div>
+
+                        <!-- Assigned Members -->
+                        {% for membership in memberships %}
+                            {% if membership.user != project.created_by %}
+                                <div class="list-group-item p-3 d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="avatar-circle">
+                                            {{ membership.user.profile.get_initials }}
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark">
+                                                {{ membership.user.get_full_name|default:membership.user.username }}
+                                            </div>
+                                            <small class="text-muted">{{ membership.user.email }} &bull; Joined {{ membership.joined_at|date:"M d, Y" }}</small>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-secondary">{{ membership.role }}</span>
+                                        {% if can_manage %}
+                                            <a href="{% url 'project_remove_member' project.pk membership.user.id %}" 
+                                               class="btn btn-sm btn-outline-danger p-1"
+                                               onclick="return confirm('Remove {{ membership.user.username }} from this project?');"
+                                               title="Remove Member">
+                                                <i class="bi bi-x-lg"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Member Form Card -->
+            {% if can_manage and member_form %}
+                <div class="col-lg-5">
+                    <div class="tf-card">
+                        <div class="tf-card-header">
+                            <h5 class="mb-0 fw-bold">Add Team Member</h5>
+                        </div>
+                        <div class="tf-card-body">
+                            <p class="text-muted small mb-3">
+                                Add registered users to collaborate on <strong>{{ project.title }}</strong>.
+                            </p>
+                            <form action="{% url 'project_add_member' project.pk %}" method="POST">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label class="form-label">Select User</label>
+                                    {{ member_form.user }}
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Role</label>
+                                    {{ member_form.role }}
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100 fw-semibold">
+                                    <i class="bi bi-person-plus me-1"></i> Add to Project
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
