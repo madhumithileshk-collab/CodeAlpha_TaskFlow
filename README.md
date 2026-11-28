@@ -186,14 +186,14 @@ python manage.py createsuperuser
 Follow the prompts to enter a username, email, and password.
 
 ### Step 6: Start the Development Server
-```powershell
+
+Run the following command in your terminal:
+
 python manage.py runserver
-```
 
-Now open your web browser and navigate to:
-👉 **http://127.0.0.1:8000/**
+Open your browser and visit:
 
----
+http://127.0.0.1:8000/
 
 
 
